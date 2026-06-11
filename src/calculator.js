@@ -18,64 +18,90 @@
  * The script validates numeric input and handles divide-by-zero.
  */
 
-const [, , op, aRaw, bRaw, ...rest] = process.argv;
-
-function printHelp() {
-  console.log('Usage: node src/calculator.js <operation> <num1> <num2>');
-  console.log('Operations: add, subtract, multiply, divide');
-  console.log('Example: node src/calculator.js add 2 3');
+// Pure functions exported for unit testing
+function add(a, b) {
+  return a + b;
 }
 
-if (!op || op === '--help' || op === '-h') {
-  printHelp();
-  process.exit(0);
+function subtract(a, b) {
+  return a - b;
 }
 
-if (rest.length > 0) {
-  console.error('Too many arguments. See --help for usage.');
-  process.exit(1);
+function multiply(a, b) {
+  return a * b;
 }
 
-if (!aRaw || !bRaw) {
-  console.error('Missing operands. See --help for usage.');
-  process.exit(1);
+function divide(a, b) {
+  if (b === 0) {
+    throw new Error('Division by zero');
+  }
+  return a / b;
 }
 
-const a = Number(aRaw);
-const b = Number(bRaw);
+module.exports = {
+  add,
+  subtract,
+  multiply,
+  divide,
+};
 
-if (!Number.isFinite(a) || !Number.isFinite(b)) {
-  console.error('Operands must be valid numbers.');
-  process.exit(1);
-}
+// CLI behaviour when run directly
+if (require.main === module) {
+  const [, , op, aRaw, bRaw, ...rest] = process.argv;
 
-function exitWithResult(value) {
-  // Print result to stdout and exit 0
-  console.log(value);
-  process.exit(0);
-}
+  function printHelp() {
+    console.log('Usage: node src/calculator.js <operation> <num1> <num2>');
+    console.log('Operations: add, subtract, multiply, divide');
+    console.log('Example: node src/calculator.js add 2 3');
+  }
 
-function exitWithError(message) {
-  console.error(message);
-  process.exit(1);
-}
+  if (!op || op === '--help' || op === '-h') {
+    printHelp();
+    process.exit(0);
+  }
 
-switch (op.toLowerCase()) {
-  case 'add':
-    exitWithResult(a + b);
-    break;
-  case 'subtract':
-    exitWithResult(a - b);
-    break;
-  case 'multiply':
-    exitWithResult(a * b);
-    break;
-  case 'divide':
-    if (b === 0) {
-      exitWithError('Error: Division by zero');
+  if (rest.length > 0) {
+    console.error('Too many arguments. See --help for usage.');
+    process.exit(1);
+  }
+
+  if (!aRaw || !bRaw) {
+    console.error('Missing operands. See --help for usage.');
+    process.exit(1);
+  }
+
+  const a = Number(aRaw);
+  const b = Number(bRaw);
+
+  if (!Number.isFinite(a) || !Number.isFinite(b)) {
+    console.error('Operands must be valid numbers.');
+    process.exit(1);
+  }
+
+  try {
+    let result;
+    switch (op.toLowerCase()) {
+      case 'add':
+        result = add(a, b);
+        break;
+      case 'subtract':
+        result = subtract(a, b);
+        break;
+      case 'multiply':
+        result = multiply(a, b);
+        break;
+      case 'divide':
+        result = divide(a, b);
+        break;
+      default:
+        console.error('Unsupported operation. Supported: add, subtract, multiply, divide');
+        process.exit(1);
     }
-    exitWithResult(a / b);
-    break;
-  default:
-    exitWithError('Unsupported operation. Supported: add, subtract, multiply, divide');
+
+    console.log(result);
+    process.exit(0);
+  } catch (err) {
+    console.error('Error:', err.message || String(err));
+    process.exit(1);
+  }
 }
